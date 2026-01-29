@@ -1,14 +1,119 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Timur govnoyed</title>
+  <title>Scheduler Mini App</title>
   <style>
-    body { margin:0; height:100vh; display:grid; place-items:center; font: 32px/1.2 system-ui, sans-serif; }
+    body { font-family: system-ui, Arial; padding: 16px; }
+    input, button { font-size: 16px; padding: 10px; width: 100%; box-sizing: border-box; margin: 8px 0; }
+    button { cursor: pointer; }
+    .muted { opacity: 0.7; font-size: 13px; }
+    .task { padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin: 8px 0; }
   </style>
 </head>
 <body>
-  TIMUR GOVNOYED
+  <h2>Планнер</h2>
+
+  <div id="status" class="muted">Инициализация…</div>
+
+  <input id="text" placeholder="Текст задачи" />
+  <input id="dt" type="datetime-local" />
+  <button id="addBtn">Создать напоминание</button>
+
+  <h3>Мои задачи</h3>
+  <div id="list"></div>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    const API_BASE = "https://scheduler-worker.s-kohanovich.workers.dev";
+
+    const statusEl = document.getElementById("status");
+    const listEl = document.getElementById("list");
+    const textEl = document.getElementById("text");
+    const dtEl = document.getElementById("dt");
+    const addBtn = document.getElementById("addBtn");
+
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    const userId = tg?.initDataUnsafe?.user?.id;
+
+    function fmt(ms) {
+      const d = new Date(ms);
+      return d.toLocaleString();
+    }
+
+    async function loadTasks() {
+      if (!userId) return;
+      const res = await fetch(`${API_BASE}/api/tasks?user_id=${encodeURIComponent(userId)}`);
+      const tasks = await res.json();
+
+      listEl.innerHTML = "";
+      if (!tasks.length) {
+        listEl.innerHTML = '<div class="muted">Пока пусто.</div>';
+        return;
+      }
+
+      for (const t of tasks) {
+        const div = document.createElement("div");
+        div.className = "task";
+        div.innerHTML = `
+          <div><b>${t.text}</b></div>
+          <div class="muted">${fmt(t.due_at)} • sent=${t.sent}</div>
+        `;
+        listEl.appendChild(div);
+      }
+    }
+
+    async function addTask() {
+      if (!userId) {
+        alert("Открой это через кнопку в боте (Mini App), иначе Telegram user_id не доступен.");
+        return;
+      }
+
+      const text = textEl.value.trim();
+      const dt = dtEl.value; // "YYYY-MM-DDTHH:mm"
+      if (!text) return alert("Напиши текст задачи.");
+      if (!dt) return alert("Выбери дату/время.");
+
+      const dueAt = new Date(dt).getTime();
+      if (!Number.isFinite(dueAt)) return alert("Некорректная дата.");
+
+      addBtn.disabled = true;
+      try {
+        const res = await fetch(`${API_BASE}/api/task`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: String(userId), text, due_at: dueAt })
+        });
+
+        if (!res.ok) {
+          const msg = await res.text();
+          throw new Error(msg);
+        }
+
+        textEl.value = "";
+        await loadTasks();
+        statusEl.textContent = "Задача создана ✅ Жди уведомление в нужное время.";
+      } catch (e) {
+        statusEl.textContent = "Ошибка: " + (e?.message || e);
+      } finally {
+        addBtn.disabled = false;
+      }
+    }
+
+    addBtn.addEventListener("click", addTask);
+
+    if (!userId) {
+      statusEl.textContent = "Нет Telegram user_id. Открой через кнопку в боте.";
+    } else {
+      statusEl.textContent = `Telegram user_id: ${userId}`;
+      loadTasks();
+    }
+  </script>
 </body>
 </html>
