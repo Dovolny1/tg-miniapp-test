@@ -5,41 +5,325 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Scheduler Mini App</title>
   <style>
-    body { font-family: system-ui, Arial; padding: 16px; }
-    input, select, button { font-size: 16px; padding: 10px; width: 100%; box-sizing: border-box; margin: 8px 0; }
-    button { cursor: pointer; }
-    .muted { opacity: 0.7; font-size: 13px; }
-    .task { padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin: 8px 0; }
-    .taskRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .delBtn { width: auto; padding: 8px 10px; }
+    :root{
+      --bg: #0b0c10;
+      --surface: #12141a;
+      --surface-2: #171a21;
+      --text: #e7eaf0;
+      --muted: rgba(231,234,240,.7);
+      --hint: rgba(231,234,240,.55);
+      --border: rgba(231,234,240,.12);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --primary: #2ea6ff;
+      --primaryText: #ffffff;
+      --danger: #ff4d4f;
+      --dangerText: #ffffff;
+      --focus: rgba(46,166,255,.35);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --pad: 14px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 14px;
+    }
+
+    .wrap { max-width: 760px; margin: 0 auto; }
+
+    .topbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .title{
+      display:flex;
+      flex-direction:column;
+      gap: 4px;
+    }
+
+    h1{
+      font-size: 20px;
+      line-height: 1.2;
+      margin: 0;
+      letter-spacing: .2px;
+    }
+
+    .sub{
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .pill{
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.02);
+      white-space: nowrap;
+    }
+
+    .card{
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: var(--pad);
+    }
+
+    .form{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .row2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    label{
+      font-size: 12px;
+      color: var(--hint);
+      margin-bottom: 6px;
+      display:block;
+    }
+
+    .input, .select{
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      outline: none;
+      transition: box-shadow .15s ease, border-color .15s ease, transform .05s ease;
+    }
+
+    .input::placeholder{ color: rgba(231,234,240,.45); }
+
+    .input:focus, .select:focus{
+      border-color: rgba(46,166,255,.55);
+      box-shadow: 0 0 0 4px var(--focus);
+    }
+
+    .actions{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      margin-top: 2px;
+    }
+
+    .btn{
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .06s ease, opacity .12s ease, filter .12s ease;
+      user-select:none;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn:disabled{ opacity: .6; cursor: default; }
+
+    .btnPrimary{
+      background: var(--primary);
+      color: var(--primaryText);
+      flex: 1;
+    }
+
+    .btnGhost{
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .status{
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      min-height: 18px;
+    }
+
+    .sectionHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin: 14px 0 10px;
+    }
+
+    .sectionHead h2{
+      font-size: 16px;
+      margin: 0;
+      letter-spacing: .2px;
+    }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+
+    .task{
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 12px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+    }
+
+    .taskMain{
+      flex: 1;
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .taskText{
+      font-size: 15px;
+      line-height: 1.25;
+      font-weight: 650;
+      word-break: break-word;
+    }
+
+    .meta{
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      flex-wrap:wrap;
+      gap: 6px;
+      align-items:center;
+    }
+
+    .badge{
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.02);
+      color: var(--muted);
+    }
+
+    .danger{
+      background: rgba(255,77,79,.10);
+      border: 1px solid rgba(255,77,79,.35);
+      color: rgba(255,220,220,.95);
+    }
+
+    .taskActions{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+
+    .iconBtn{
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition: transform .06s ease, opacity .12s ease;
+      flex: 0 0 auto;
+    }
+    .iconBtn:active{ transform: translateY(1px); }
+    .iconBtn.dangerBtn{
+      border-color: rgba(255,77,79,.35);
+      background: rgba(255,77,79,.08);
+    }
+
+    .empty{
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px dashed var(--border);
+      color: var(--muted);
+      background: rgba(255,255,255,.02);
+      font-size: 13px;
+    }
+
+    @media (max-width: 520px){
+      .row2{ grid-template-columns: 1fr; }
+      .pill{ display:none; }
+    }
   </style>
 </head>
 <body>
-  <h2>Планнер</h2>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">
+        <h1>Планнер</h1>
+        <p class="sub" id="subtitle">Создай напоминание — и Telegram пнёт тебя в нужный момент.</p>
+      </div>
+      <div class="pill" id="pill">…</div>
+    </div>
 
-  <div id="status" class="muted">Инициализация…</div>
+    <div class="card">
+      <div class="form">
+        <div>
+          <label for="text">Задача</label>
+          <input class="input" id="text" placeholder="Например: размять спину, выпить воды, отправить инвойс…" />
+        </div>
 
-  <input id="text" placeholder="Текст задачи" />
-  <input id="dt" type="datetime-local" />
+        <div class="row2">
+          <div>
+            <label for="dt">Дата и время</label>
+            <input class="input" id="dt" type="datetime-local" />
+          </div>
 
-  <select id="repeat">
-    <option value="none">Без повтора</option>
-    <option value="hourly">Каждый час</option>
-    <option value="daily">Каждый день</option>
-    <option value="monthly">Каждый месяц</option>
-    <option value="weekly:1">Каждый понедельник</option>
-    <option value="weekly:2">Каждый вторник</option>
-    <option value="weekly:3">Каждую среду</option>
-    <option value="weekly:4">Каждый четверг</option>
-    <option value="weekly:5">Каждую пятницу</option>
-    <option value="weekly:6">Каждую субботу</option>
-    <option value="weekly:7">Каждое воскресенье</option>
-  </select>
+          <div>
+            <label for="repeat">Повтор</label>
+            <select class="select" id="repeat">
+              <option value="none">Без повтора</option>
+              <option value="hourly">Каждый час</option>
+              <option value="daily">Каждый день</option>
+              <option value="monthly">Каждый месяц</option>
+              <option value="weekly:1">Каждый понедельник</option>
+              <option value="weekly:2">Каждый вторник</option>
+              <option value="weekly:3">Каждую среду</option>
+              <option value="weekly:4">Каждый четверг</option>
+              <option value="weekly:5">Каждую пятницу</option>
+              <option value="weekly:6">Каждую субботу</option>
+              <option value="weekly:7">Каждое воскресенье</option>
+            </select>
+          </div>
+        </div>
 
-  <button id="addBtn">Создать напоминание</button>
+        <div class="actions">
+          <button class="btn btnPrimary" id="addBtn">Создать</button>
+          <button class="btn btnGhost" id="refreshBtn" type="button">Обновить</button>
+        </div>
 
-  <h3>Мои задачи</h3>
-  <div id="list"></div>
+        <div class="status" id="status">Инициализация…</div>
+      </div>
+    </div>
+
+    <div class="sectionHead">
+      <h2>Мои задачи</h2>
+    </div>
+
+    <div class="list" id="list"></div>
+  </div>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
@@ -51,6 +335,8 @@
     const dtEl = document.getElementById("dt");
     const repeatEl = document.getElementById("repeat");
     const addBtn = document.getElementById("addBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const pillEl = document.getElementById("pill");
 
     const tg = window.Telegram?.WebApp;
     if (tg) {
@@ -58,12 +344,42 @@
       tg.expand();
     }
 
-    const userId = tg?.initDataUnsafe?.user?.id;
+    function applyTelegramTheme() {
+      if (!tg?.themeParams) return;
 
-    function fmt(ms) {
-      const d = new Date(ms);
-      return d.toLocaleString();
+      const p = tg.themeParams;
+
+      // fallback-friendly helper
+      const pick = (v, fallback) => (v && String(v).trim().length ? String(v) : fallback);
+
+      // Telegram иногда даёт не все параметры. Берём максимум что есть и мягко дополняем.
+      const bg = pick(p.bg_color, "#0b0c10");
+      const text = pick(p.text_color, "#e7eaf0");
+      const hint = pick(p.hint_color, "rgba(231,234,240,.55)");
+      const link = pick(p.link_color, "#2ea6ff");
+      const btn = pick(p.button_color, "#2ea6ff");
+      const btnText = pick(p.button_text_color, "#ffffff");
+      const secondaryBg = pick(p.secondary_bg_color, "rgba(255,255,255,.06)");
+
+      // surface мы делаем производным: secondary_bg_color часто лучше подходит в роли карточек
+      document.documentElement.style.setProperty("--bg", bg);
+      document.documentElement.style.setProperty("--text", text);
+      document.documentElement.style.setProperty("--hint", hint);
+      document.documentElement.style.setProperty("--muted", hint);
+      document.documentElement.style.setProperty("--primary", btn || link);
+      document.documentElement.style.setProperty("--primaryText", btnText);
+
+      // surface-ы: чуть отличаемся от bg, но не “выкалываем глаза”
+      document.documentElement.style.setProperty("--surface", secondaryBg);
+      document.documentElement.style.setProperty("--surface-2", "rgba(0,0,0,.12)");
+      document.documentElement.style.setProperty("--border", "rgba(127,127,127,.22)");
+      document.documentElement.style.setProperty("--focus", "rgba(46,166,255,.25)");
     }
+
+    applyTelegramTheme();
+    tg?.onEvent?.("themeChanged", applyTelegramTheme);
+
+    const userId = tg?.initDataUnsafe?.user?.id;
 
     function escapeHtml(s) {
       return String(s)
@@ -74,38 +390,69 @@
         .replaceAll("'", "&#039;");
     }
 
+    function fmt(ms) {
+      return new Date(ms).toLocaleString();
+    }
+
+    function humanRepeat(rule) {
+      const r = String(rule || "none");
+      if (r === "none") return "без повтора";
+      if (r === "hourly") return "каждый час";
+      if (r === "daily") return "каждый день";
+      if (r === "monthly") return "каждый месяц";
+      if (r.startsWith("weekly:")) {
+        const wd = Number(r.split(":")[1]);
+        const names = {
+          1: "каждый понедельник",
+          2: "каждый вторник",
+          3: "каждую среду",
+          4: "каждый четверг",
+          5: "каждую пятницу",
+          6: "каждую субботу",
+          7: "каждое воскресенье"
+        };
+        return names[wd] || "еженедельно";
+      }
+      return r;
+    }
+
     async function loadTasks() {
       if (!userId) return;
 
       const res = await fetch(`${API_BASE}/api/tasks?user_id=${encodeURIComponent(userId)}`);
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg);
-      }
+      if (!res.ok) throw new Error(await res.text());
 
       const tasks = await res.json();
 
       listEl.innerHTML = "";
       if (!tasks.length) {
-        listEl.innerHTML = '<div class="muted">Пока пусто.</div>';
+        listEl.innerHTML = `<div class="empty">Пока пусто. Создай первую задачу — и Telegram начнёт тебя воспитывать.</div>`;
         return;
       }
 
       for (const t of tasks) {
         const div = document.createElement("div");
         div.className = "task";
+
+        const repeatLabel = humanRepeat(t.repeat_rule);
+        const repeatBadge = t.repeat_rule && t.repeat_rule !== "none"
+          ? `<span class="badge">${escapeHtml(repeatLabel)}</span>`
+          : `<span class="badge">${escapeHtml(repeatLabel)}</span>`;
+
         div.innerHTML = `
-          <div class="taskRow">
-            <div style="flex:1">
-              <div><b>${escapeHtml(t.text)}</b></div>
-              <div class="muted">${fmt(t.due_at)} • repeat=${escapeHtml(t.repeat_rule)}</div>
+          <div class="taskMain">
+            <div class="taskText">${escapeHtml(t.text)}</div>
+            <div class="meta">
+              <span class="badge">${escapeHtml(fmt(t.due_at))}</span>
+              ${repeatBadge}
             </div>
-            <button class="delBtn" data-id="${t.id}">Удалить</button>
+          </div>
+          <div class="taskActions">
+            <button class="iconBtn dangerBtn" title="Удалить" aria-label="Удалить">✕</button>
           </div>
         `;
-        listEl.appendChild(div);
 
-        div.querySelector(".delBtn").addEventListener("click", async () => {
+        div.querySelector(".dangerBtn").addEventListener("click", async () => {
           if (!confirm("Удалить задачу?")) return;
 
           try {
@@ -115,35 +462,34 @@
               body: JSON.stringify({ user_id: String(userId), task_id: t.id })
             });
 
-            if (!resp.ok) {
-              const msg = await resp.text();
-              throw new Error(msg);
-            }
+            if (!resp.ok) throw new Error(await resp.text());
 
-            await loadTasks();
             statusEl.textContent = "Удалено ✅";
+            await loadTasks();
           } catch (e) {
             statusEl.textContent = "Ошибка удаления: " + (e?.message || e);
           }
         });
+
+        listEl.appendChild(div);
       }
     }
 
     async function addTask() {
       if (!userId) {
-        alert("Открой это через кнопку в боте (Mini App), иначе Telegram user_id не доступен.");
+        statusEl.textContent = "Открой Mini App через кнопку в боте (иначе Telegram user_id недоступен).";
         return;
       }
 
       const text = textEl.value.trim();
-      const dt = dtEl.value; // "YYYY-MM-DDTHH:mm"
+      const dt = dtEl.value;
       const repeat_rule = repeatEl.value;
 
-      if (!text) return alert("Напиши текст задачи.");
-      if (!dt) return alert("Выбери дату/время.");
+      if (!text) return statusEl.textContent = "Напиши текст задачи.";
+      if (!dt) return statusEl.textContent = "Выбери дату/время.";
 
       const dueAt = new Date(dt).getTime();
-      if (!Number.isFinite(dueAt)) return alert("Некорректная дата.");
+      if (!Number.isFinite(dueAt)) return statusEl.textContent = "Некорректная дата.";
 
       addBtn.disabled = true;
       try {
@@ -158,14 +504,11 @@
           })
         });
 
-        if (!res.ok) {
-          const msg = await res.text();
-          throw new Error(msg);
-        }
+        if (!res.ok) throw new Error(await res.text());
 
         textEl.value = "";
+        statusEl.textContent = "Создано ✅ Уведомление придёт в Telegram.";
         await loadTasks();
-        statusEl.textContent = "Задача создана ✅ Жди уведомление в нужное время.";
       } catch (e) {
         statusEl.textContent = "Ошибка: " + (e?.message || e);
       } finally {
@@ -173,21 +516,23 @@
       }
     }
 
-    addBtn.addEventListener("click", () => addTask());
+    addBtn.addEventListener("click", addTask);
+    refreshBtn.addEventListener("click", () => loadTasks().catch(e => statusEl.textContent = "Ошибка: " + (e?.message || e)));
 
-    // Автообновление списка раз в 10 секунд (чтобы видеть удаление/перенос после cron)
-    let timer = null;
+    // автообновление, чтобы видеть перенос/удаление после cron
+    setInterval(() => loadTasks().catch(() => {}), 10_000);
 
     (async () => {
       try {
         if (!userId) {
-          statusEl.textContent = "Нет Telegram user_id. Открой через кнопку в боте.";
+          pillEl.textContent = "Открой через бота";
+          statusEl.textContent = "Нет Telegram user_id. Открой Mini App через кнопку в боте.";
           return;
         }
 
-        statusEl.textContent = `Telegram user_id: ${userId}`;
+        pillEl.textContent = "Подключено к Telegram";
+        statusEl.textContent = "Готово ✅";
         await loadTasks();
-        timer = setInterval(() => loadTasks().catch(() => {}), 10_000);
       } catch (e) {
         statusEl.textContent = "Ошибка: " + (e?.message || e);
       }
