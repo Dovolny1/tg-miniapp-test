@@ -6,7 +6,7 @@
   <title>Scheduler Mini App</title>
   <style>
     body { font-family: system-ui, Arial; padding: 16px; }
-    input, button { font-size: 16px; padding: 10px; width: 100%; box-sizing: border-box; margin: 8px 0; }
+    input, select, button { font-size: 16px; padding: 10px; width: 100%; box-sizing: border-box; margin: 8px 0; }
     button { cursor: pointer; }
     .muted { opacity: 0.7; font-size: 13px; }
     .task { padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin: 8px 0; }
@@ -19,6 +19,21 @@
 
   <input id="text" placeholder="Текст задачи" />
   <input id="dt" type="datetime-local" />
+
+  <select id="repeat">
+    <option value="none">Без повтора</option>
+    <option value="hourly">Каждый час</option>
+    <option value="daily">Каждый день</option>
+    <option value="monthly">Каждый месяц</option>
+    <option value="weekly:1">Каждый понедельник</option>
+    <option value="weekly:2">Каждый вторник</option>
+    <option value="weekly:3">Каждую среду</option>
+    <option value="weekly:4">Каждый четверг</option>
+    <option value="weekly:5">Каждую пятницу</option>
+    <option value="weekly:6">Каждую субботу</option>
+    <option value="weekly:7">Каждое воскресенье</option>
+  </select>
+
   <button id="addBtn">Создать напоминание</button>
 
   <h3>Мои задачи</h3>
@@ -32,6 +47,7 @@
     const listEl = document.getElementById("list");
     const textEl = document.getElementById("text");
     const dtEl = document.getElementById("dt");
+    const repeatEl = document.getElementById("repeat");
     const addBtn = document.getElementById("addBtn");
 
     const tg = window.Telegram?.WebApp;
@@ -47,9 +63,24 @@
       return d.toLocaleString();
     }
 
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
     async function loadTasks() {
       if (!userId) return;
+
       const res = await fetch(`${API_BASE}/api/tasks?user_id=${encodeURIComponent(userId)}`);
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg);
+      }
+
       const tasks = await res.json();
 
       listEl.innerHTML = "";
@@ -62,8 +93,8 @@
         const div = document.createElement("div");
         div.className = "task";
         div.innerHTML = `
-          <div><b>${t.text}</b></div>
-          <div class="muted">${fmt(t.due_at)} • sent=${t.sent}</div>
+          <div><b>${escapeHtml(t.text)}</b></div>
+          <div class="muted">${fmt(t.due_at)} • repeat=${escapeHtml(t.repeat_rule)}</div>
         `;
         listEl.appendChild(div);
       }
@@ -77,6 +108,8 @@
 
       const text = textEl.value.trim();
       const dt = dtEl.value; // "YYYY-MM-DDTHH:mm"
+      const repeat_rule = repeatEl.value;
+
       if (!text) return alert("Напиши текст задачи.");
       if (!dt) return alert("Выбери дату/время.");
 
@@ -88,7 +121,12 @@
         const res = await fetch(`${API_BASE}/api/task`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: String(userId), text, due_at: dueAt })
+          body: JSON.stringify({
+            user_id: String(userId),
+            text,
+            due_at: dueAt,
+            repeat_rule
+          })
         });
 
         if (!res.ok) {
@@ -106,14 +144,25 @@
       }
     }
 
-    addBtn.addEventListener("click", addTask);
+    addBtn.addEventListener("click", () => addTask());
 
-    if (!userId) {
-      statusEl.textContent = "Нет Telegram user_id. Открой через кнопку в боте.";
-    } else {
-      statusEl.textContent = `Telegram user_id: ${userId}`;
-      loadTasks();
-    }
+    // Автообновление списка раз в 10 секунд (удобно, чтобы видеть удаление/перенос после cron)
+    let timer = null;
+
+    (async () => {
+      try {
+        if (!userId) {
+          statusEl.textContent = "Нет Telegram user_id. Открой через кнопку в боте.";
+          return;
+        }
+
+        statusEl.textContent = `Telegram user_id: ${userId}`;
+        await loadTasks();
+        timer = setInterval(() => loadTasks().catch(() => {}), 10_000);
+      } catch (e) {
+        statusEl.textContent = "Ошибка: " + (e?.message || e);
+      }
+    })();
   </script>
 </body>
 </html>
