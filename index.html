@@ -1,9 +1,9 @@
 ﻿<!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Kotik Scheduler</title>
+  <title>Scheduler Mini App</title>
   <style>
     :root{
       --bg: #0b0c10;
@@ -16,8 +16,6 @@
       --shadow: 0 10px 30px rgba(0,0,0,.35);
       --primary: #2ea6ff;
       --primaryText: #ffffff;
-      --danger: #ff4d4f;
-      --dangerText: #ffffff;
       --focus: rgba(46,166,255,.35);
       --radius: 18px;
       --radius-sm: 12px;
@@ -39,28 +37,9 @@
     .topbar{
       display:flex;
       align-items:flex-start;
-      justify-content:space-between;
+      justify-content:flex-end;
       gap: 12px;
       margin-bottom: 12px;
-    }
-
-    .title{
-      display:flex;
-      flex-direction:column;
-      gap: 4px;
-    }
-
-    h1{
-      font-size: 20px;
-      line-height: 1.2;
-      margin: 0;
-      letter-spacing: .2px;
-    }
-
-    .sub{
-      font-size: 13px;
-      color: var(--muted);
-      margin: 0;
     }
 
     .pill{
@@ -134,6 +113,7 @@
       cursor: pointer;
       transition: transform .06s ease, opacity .12s ease;
       user-select:none;
+      width: 100%;
     }
     .btn:active{ transform: translateY(1px); }
     .btn:disabled{ opacity: .6; cursor: default; }
@@ -141,13 +121,6 @@
     .btnPrimary{
       background: var(--primary);
       color: var(--primaryText);
-      flex: 1;
-    }
-
-    .btnGhost{
-      background: rgba(255,255,255,.03);
-      border: 1px solid var(--border);
-      color: var(--text);
     }
 
     .status{
@@ -250,14 +223,22 @@
       font-size: 13px;
     }
 
-    /* Activation screen */
     .gate{
       display:none;
       margin-bottom: 12px;
     }
 
-    .gate h2{ margin:0 0 8px; font-size: 16px; }
-    .gate p{ margin:0; color: var(--muted); font-size: 13px; line-height: 1.35; }
+    .gateTitle{
+      font-size: 16px;
+      margin: 0 0 8px;
+      letter-spacing: .2px;
+    }
+    .gateText{
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
 
     @media (max-width: 520px){
       .row2{ grid-template-columns: 1fr; }
@@ -268,23 +249,17 @@
 <body>
   <div class="wrap">
     <div class="topbar">
-      <div class="title">
-        <h1>Kotik Scheduler</h1>
-        <p class="sub" id="subtitle">Напоминания приходят сообщением в чате с ботом.</p>
-      </div>
       <div class="pill" id="pill">…</div>
     </div>
 
     <!-- Activation gate -->
     <div class="card gate" id="gate">
-      <h2>Активируй напоминания</h2>
-      <p>
-        Telegram не даёт боту писать тебе первым. Нужно один раз нажать <b>Start</b> в чате с ботом —
-        после этого напоминания начнут приходить.
+      <div class="gateTitle">Allow the bot to send you reminders</div>
+      <p class="gateText">
+        Telegram requires a one-time permission: you must tap <b>Start</b> in the bot chat.
       </p>
       <div class="actions" style="margin-top:12px;">
-        <button class="btn btnPrimary" id="activateBtn">Активировать напоминания</button>
-        <button class="btn btnGhost" id="checkBtn" type="button">Проверить</button>
+        <button class="btn btnPrimary" id="activateBtn">I allow</button>
       </div>
       <div class="status" id="gateStatus"></div>
     </div>
@@ -293,45 +268,44 @@
     <div class="card" id="appCard">
       <div class="form">
         <div>
-          <label for="text">Задача</label>
-          <input class="input" id="text" placeholder="Например: размяться, выпить воды, отправить инвойс…" />
+          <label for="text">Task</label>
+          <input class="input" id="text" placeholder="E.g. stretch, drink water, send invoice…" />
         </div>
 
         <div class="row2">
           <div>
-            <label for="dt">Дата и время</label>
+            <label for="dt">Date & time</label>
             <input class="input" id="dt" type="datetime-local" />
           </div>
 
           <div>
-            <label for="repeat">Повтор</label>
+            <label for="repeat">Repeat</label>
             <select class="select" id="repeat">
-              <option value="none">Без повтора</option>
-              <option value="hourly">Каждый час</option>
-              <option value="daily">Каждый день</option>
-              <option value="monthly">Каждый месяц</option>
-              <option value="weekly:1">Каждый понедельник</option>
-              <option value="weekly:2">Каждый вторник</option>
-              <option value="weekly:3">Каждую среду</option>
-              <option value="weekly:4">Каждый четверг</option>
-              <option value="weekly:5">Каждую пятницу</option>
-              <option value="weekly:6">Каждую субботу</option>
-              <option value="weekly:7">Каждое воскресенье</option>
+              <option value="none">No repeat</option>
+              <option value="hourly">Every hour</option>
+              <option value="daily">Every day</option>
+              <option value="monthly">Every month</option>
+              <option value="weekly:1">Every Monday</option>
+              <option value="weekly:2">Every Tuesday</option>
+              <option value="weekly:3">Every Wednesday</option>
+              <option value="weekly:4">Every Thursday</option>
+              <option value="weekly:5">Every Friday</option>
+              <option value="weekly:6">Every Saturday</option>
+              <option value="weekly:7">Every Sunday</option>
             </select>
           </div>
         </div>
 
         <div class="actions">
-          <button class="btn btnPrimary" id="addBtn">Создать</button>
-          <button class="btn btnGhost" id="refreshBtn" type="button">Обновить</button>
+          <button class="btn btnPrimary" id="addBtn">Create reminder</button>
         </div>
 
-        <div class="status" id="status">Инициализация…</div>
+        <div class="status" id="status"></div>
       </div>
     </div>
 
     <div class="sectionHead">
-      <h2>Мои задачи</h2>
+      <h2>My tasks</h2>
     </div>
 
     <div class="list" id="list"></div>
@@ -349,13 +323,11 @@
     const dtEl = document.getElementById("dt");
     const repeatEl = document.getElementById("repeat");
     const addBtn = document.getElementById("addBtn");
-    const refreshBtn = document.getElementById("refreshBtn");
     const pillEl = document.getElementById("pill");
 
     const gateEl = document.getElementById("gate");
     const gateStatusEl = document.getElementById("gateStatus");
     const activateBtn = document.getElementById("activateBtn");
-    const checkBtn = document.getElementById("checkBtn");
     const appCardEl = document.getElementById("appCard");
 
     const tg = window.Telegram?.WebApp;
@@ -390,6 +362,10 @@
 
     const userId = tg?.initDataUnsafe?.user?.id;
 
+    function setError(el, message) {
+      el.textContent = message ? String(message) : "";
+    }
+
     function escapeHtml(s) {
       return String(s)
         .replaceAll("&", "&amp;")
@@ -403,22 +379,22 @@
 
     function humanRepeat(rule) {
       const r = String(rule || "none");
-      if (r === "none") return "без повтора";
-      if (r === "hourly") return "каждый час";
-      if (r === "daily") return "каждый день";
-      if (r === "monthly") return "каждый месяц";
+      if (r === "none") return "no repeat";
+      if (r === "hourly") return "every hour";
+      if (r === "daily") return "every day";
+      if (r === "monthly") return "every month";
       if (r.startsWith("weekly:")) {
         const wd = Number(r.split(":")[1]);
         const names = {
-          1: "каждый понедельник",
-          2: "каждый вторник",
-          3: "каждую среду",
-          4: "каждый четверг",
-          5: "каждую пятницу",
-          6: "каждую субботу",
-          7: "каждое воскресенье"
+          1: "every Monday",
+          2: "every Tuesday",
+          3: "every Wednesday",
+          4: "every Thursday",
+          5: "every Friday",
+          6: "every Saturday",
+          7: "every Sunday"
         };
-        return names[wd] || "еженедельно";
+        return names[wd] || "weekly";
       }
       return r;
     }
@@ -427,6 +403,8 @@
       gateEl.style.display = show ? "block" : "none";
       appCardEl.style.display = show ? "none" : "block";
       listEl.style.display = show ? "none" : "flex";
+      // clear errors when switching states
+      if (!show) setError(gateStatusEl, "");
     }
 
     async function isActivated() {
@@ -443,7 +421,7 @@
 
       listEl.innerHTML = "";
       if (!tasks.length) {
-        listEl.innerHTML = `<div class="empty">Пока пусто. Создай первую задачу — и котик будет шипеть напоминаниями.</div>`;
+        listEl.innerHTML = `<div class="empty">Empty. Create your first task — and Telegram will start parenting you.</div>`;
         return;
       }
 
@@ -458,22 +436,23 @@
               <span class="badge">${escapeHtml(humanRepeat(t.repeat_rule))}</span>
             </div>
           </div>
-          <button class="iconBtn dangerBtn" title="Удалить" aria-label="Удалить">✕</button>
+          <button class="iconBtn dangerBtn" title="Delete" aria-label="Delete">✕</button>
         `;
 
         div.querySelector(".dangerBtn").addEventListener("click", async () => {
-          if (!confirm("Удалить задачу?")) return;
+          if (!confirm("Delete this task?")) return;
+
           try {
+            setError(statusEl, "");
             const resp = await fetch(`${API_BASE}/api/task/delete`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ user_id: String(userId), task_id: t.id })
             });
             if (!resp.ok) throw new Error(await resp.text());
-            statusEl.textContent = "Удалено ✅";
             await loadTasks();
           } catch (e) {
-            statusEl.textContent = "Ошибка удаления: " + (e?.message || e);
+            setError(statusEl, `Error: ${e?.message || e}`);
           }
         });
 
@@ -486,14 +465,16 @@
       const dt = dtEl.value;
       const repeat_rule = repeatEl.value;
 
-      if (!text) return statusEl.textContent = "Напиши текст задачи.";
-      if (!dt) return statusEl.textContent = "Выбери дату/время.";
+      if (!text) return setError(statusEl, "Error: Please enter a task.");
+      if (!dt) return setError(statusEl, "Error: Please choose a date & time.");
 
       const dueAt = new Date(dt).getTime();
-      if (!Number.isFinite(dueAt)) return statusEl.textContent = "Некорректная дата.";
+      if (!Number.isFinite(dueAt)) return setError(statusEl, "Error: Invalid date.");
 
       addBtn.disabled = true;
       try {
+        setError(statusEl, "");
+
         const res = await fetch(`${API_BASE}/api/task`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -503,88 +484,72 @@
         if (!res.ok) {
           const msg = await res.text();
           if (res.status === 403) {
-            // не активирован — покажем gate
             showGate(true);
-            gateStatusEl.textContent = "Сначала активируй бота: нажми «Активировать напоминания», потом вернись и жми «Проверить».";
+            setError(gateStatusEl, "Please tap “I allow”, then press Start in the bot chat.");
           }
           throw new Error(msg);
         }
 
         textEl.value = "";
-        statusEl.textContent = "Создано ✅ Уведомление придёт в Telegram.";
         await loadTasks();
       } catch (e) {
-        if (e?.message) statusEl.textContent = "Ошибка: " + e.message;
-        else statusEl.textContent = "Ошибка создания.";
+        setError(statusEl, `Error: ${e?.message || e}`);
       } finally {
         addBtn.disabled = false;
       }
     }
 
     activateBtn.addEventListener("click", () => {
-      // Внутри Mini App лучше так
+      setError(gateStatusEl, "");
       if (tg?.openTelegramLink) tg.openTelegramLink(ACTIVATE_LINK);
       else window.location.href = ACTIVATE_LINK;
     });
 
-    checkBtn.addEventListener("click", async () => {
-      try {
-        gateStatusEl.textContent = "Проверяю…";
-        const ok = await isActivated();
-        if (ok) {
-          showGate(false);
-          statusEl.textContent = "Готово ✅";
-          await loadTasks();
-        } else {
-          gateStatusEl.textContent = "Пока не активировано. Открой чат с ботом и нажми Start.";
-        }
-      } catch (e) {
-        gateStatusEl.textContent = "Ошибка проверки: " + (e?.message || e);
-      }
-    });
-
     addBtn.addEventListener("click", addTask);
-    refreshBtn.addEventListener("click", () => loadTasks().catch(e => statusEl.textContent = "Ошибка: " + (e?.message || e)));
 
-    // автообновление списка (и можно авто-снимать gate после активации)
+    // auto refresh: also auto-unlock after activation (no "Check" button needed)
     setInterval(async () => {
       try {
         if (!userId) return;
+
         if (gateEl.style.display === "block") {
           const ok = await isActivated();
           if (ok) {
             showGate(false);
-            statusEl.textContent = "Готово ✅";
+            setError(statusEl, "");
             await loadTasks();
           }
         } else {
           await loadTasks();
         }
-      } catch {}
+      } catch {
+        // silent: no spam. errors show only when user clicks actions.
+      }
     }, 10_000);
 
     (async () => {
       try {
         if (!userId) {
-          pillEl.textContent = "Открой через Telegram";
+          pillEl.textContent = "Open via Telegram";
           showGate(true);
-          gateStatusEl.textContent = "Нет Telegram user_id. Открой Mini App через кнопку Open у бота.";
+          setError(gateStatusEl, "Error: Telegram user_id is missing. Open this as a Mini App from the bot.");
           return;
         }
 
-        pillEl.textContent = "Подключено";
+        pillEl.textContent = "Connected";
+        setError(statusEl, ""); // no "Ready" messages
+
         const ok = await isActivated();
         if (!ok) {
           showGate(true);
-          gateStatusEl.textContent = "Нужно один раз нажать Start в чате с ботом, чтобы он мог присылать напоминания.";
+          setError(gateStatusEl, "Tap “I allow”, then press Start in the bot chat.");
           return;
         }
 
         showGate(false);
-        statusEl.textContent = "Готово ✅";
         await loadTasks();
       } catch (e) {
-        statusEl.textContent = "Ошибка: " + (e?.message || e);
+        setError(statusEl, `Error: ${e?.message || e}`);
       }
     })();
   </script>
