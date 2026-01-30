@@ -1,4 +1,4 @@
-﻿<!doctype html> 
+﻿<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
@@ -10,6 +10,8 @@
     button { cursor: pointer; }
     .muted { opacity: 0.7; font-size: 13px; }
     .task { padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin: 8px 0; }
+    .taskRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .delBtn { width: auto; padding: 8px 10px; }
   </style>
 </head>
 <body>
@@ -93,10 +95,37 @@
         const div = document.createElement("div");
         div.className = "task";
         div.innerHTML = `
-          <div><b>${escapeHtml(t.text)}</b></div>
-          <div class="muted">${fmt(t.due_at)} • repeat=${escapeHtml(t.repeat_rule)}</div>
+          <div class="taskRow">
+            <div style="flex:1">
+              <div><b>${escapeHtml(t.text)}</b></div>
+              <div class="muted">${fmt(t.due_at)} • repeat=${escapeHtml(t.repeat_rule)}</div>
+            </div>
+            <button class="delBtn" data-id="${t.id}">Удалить</button>
+          </div>
         `;
         listEl.appendChild(div);
+
+        div.querySelector(".delBtn").addEventListener("click", async () => {
+          if (!confirm("Удалить задачу?")) return;
+
+          try {
+            const resp = await fetch(`${API_BASE}/api/task/delete`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ user_id: String(userId), task_id: t.id })
+            });
+
+            if (!resp.ok) {
+              const msg = await resp.text();
+              throw new Error(msg);
+            }
+
+            await loadTasks();
+            statusEl.textContent = "Удалено ✅";
+          } catch (e) {
+            statusEl.textContent = "Ошибка удаления: " + (e?.message || e);
+          }
+        });
       }
     }
 
@@ -146,7 +175,7 @@
 
     addBtn.addEventListener("click", () => addTask());
 
-    // Автообновление списка раз в 10 секунд (удобно, чтобы видеть удаление/перенос после cron)
+    // Автообновление списка раз в 10 секунд (чтобы видеть удаление/перенос после cron)
     let timer = null;
 
     (async () => {
